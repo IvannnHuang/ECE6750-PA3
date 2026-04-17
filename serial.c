@@ -64,12 +64,14 @@ Implements a serial version of Gustavson's algorithm.
 void sparseMM(CSRdata *a, CSRdata *b, COOdata *c) {
     int m = a -> m;
     int n = b -> n;
+ 
+    int capacity = c->nnz;
 
-    c -> row = (int *)malloc((c -> nnz) * sizeof(int));
-    c -> column = (int *)malloc((c -> nnz) * sizeof(int));
-    c -> values = (double *)malloc((c -> nnz) * sizeof(double));
-    c -> m = m;
-    c -> n = n; 
+    c->row = (int *)malloc(capacity * sizeof(int));
+    c->column = (int *)malloc(capacity * sizeof(int));
+    c->values = (double *)malloc(capacity * sizeof(double));
+    c->m = m;
+    c->n = n;
     c->pointer = 0;
     c->nnz = 0;
 
@@ -143,16 +145,26 @@ void convert(CSRdata *a) {
 
 
 
-int main(void) {
+int main(int argc, char **argv) {
     FILE *fptr;
-    
+
+    if (argc < 2) {
+        printf("Usage: %s matrix_file\n", argv[0]);
+        return 1;
+    }
+
     // Initialize structs
     CSRdata *a = (CSRdata *)malloc(sizeof(CSRdata));
     CSRdata *b = (CSRdata *)malloc(sizeof(CSRdata));
     COOdata *c = (COOdata *)malloc(sizeof(COOdata));
-    
+
     // Determines which matrix will be multiplied by itself.
-    fptr = fopen("small.mtx", "r");
+    fptr = fopen(argv[1], "r");
+    if (!fptr) {
+        perror("fopen");
+        return 1;
+    }
+
     char buffer[256];
     int counter = 0;
     int xp = 0;
@@ -170,7 +182,7 @@ int main(void) {
             a->n = colValue;
             a->nnz = numnnz;
 
-            a->rowOffsets = (int *)malloc((rowValue + 1) * sizeof(int));
+            a->rowOffsets = (int *)calloc((rowValue + 1), sizeof(int));
             a->cindexes = (int *)malloc(numnnz * sizeof(int));
             a->values = (double *)malloc(numnnz * sizeof(double));
 
