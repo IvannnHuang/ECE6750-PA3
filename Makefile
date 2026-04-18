@@ -1,58 +1,62 @@
-CC      = gcc
-CFLAGS  = -O3 -Wall -Wextra -march=native
-LDFLAGS = -lm
-PARTITION = ece6750
+CC ?= gcc
+# CFLAGS ?=
+CFLAGS ?= -Wall -Wextra -O3 -march=native -ffast-math -funroll-loops
+LDFLAGS ?= -lm
 
-MODE ?= single
 IMPL ?= pthreads
+MODE ?= parallel
 matrix ?= small.mtx
-p ?= 1
+p ?= 8
 test ?= 0
+PARTITION ?= ece6750
 
 ifeq ($(test),1)
-TESTFLAG = -DTEST
+TEST_FLAG = -DTEST
 else
-TESTFLAG =
+TEST_FLAG =
 endif
 
-.PHONY: all clean full single parallel
+.PHONY: all full clean pspgemm serial
 
-all:
-	@echo "Use: make full MODE=single matrix=small.mtx"
-	@echo " or: make full MODE=parallel IMPL=pthreads matrix=even.mtx p=8"
+all: full
 
-single: serial
+ifeq ($(MODE),serial)
+RUN_BIN = serial
+RUN_P =
+RUN_TAG = serial_$(basename $(notdir $(matrix)))
+else
+RUN_BIN = pspgemm
+RUN_P = $(p)
+RUN_TAG = $(IMPL)_$(basename $(notdir $(matrix)))_p$(p)
+endif
 
-parallel:
 ifeq ($(IMPL),pthreads)
-	$(MAKE) pthreads
+PSPGEMM_SRC = pthread.c
+CFLAGS = -Wall -Wextra
 else ifeq ($(IMPL),omp)
-	$(MAKE) omp
+PSPGEMM_SRC = omp.c
 else ifeq ($(IMPL),balance)
-	$(MAKE) balance
+PSPGEMM_SRC = balance.c
 else
-	@echo "Unknown IMPL=$(IMPL). Use pthreads, omp, or balance."
-	@exit 1
+PSPGEMM_SRC =
 endif
+
+full: clean
+	sbatch --partition=$(PARTITION) \
+		--job-name=$(RUN_TAG) \
+		--output=slurn_%j_$(RUN_TAG).out \
+		--error=slurn_%j_$(RUN_TAG).err \
+		--cpus-per-task=$(p) \
+		--export=MODE="$(MODE)",IMPL="$(IMPL)",matrix="$(matrix)",p="$(RUN_P)",test="$(test)" run.sh
+
+pspgemm: $(PSPGEMM_SRC)
+	$(CC) $(CFLAGS) $(TEST_FLAG) -o $@ $(PSPGEMM_SRC) $(LDFLAGS) -lpthread
 
 serial: serial.c
-	$(CC) $(CFLAGS) $(TESTFLAG) serial.c -o serial $(LDFLAGS)
-
-pthreads: pthread.c
-	$(CC) $(CFLAGS) $(TESTFLAG) pthread.c -o pthread $(LDFLAGS) -lpthread
-
-omp: omp.c
-	$(CC) $(CFLAGS) $(TESTFLAG) omp.c -o omp $(LDFLAGS) -fopenmp
-
-balance: balance.c
-	$(CC) $(CFLAGS) $(TESTFLAG) balance.c -o balance $(LDFLAGS) -lpthread
-
-full:
-	sbatch --partition=$(PARTITION) \
-	       --cpus-per-task=$(p) \
-	       --export=MODE=$(MODE),IMPL=$(IMPL),matrix=$(matrix),p=$(p),test=$(test) \
-	       run.sh
+	$(CC) $(CFLAGS) -DSERIAL_STANDALONE -o $@ serial.c $(LDFLAGS)
 
 clean:
-	rm -f serial pthread omp balance
-	rm -f slurm-*.out slurm-*.err
+	rm -f pspgemm serial
+
+realclean: clean
+	rm -f *.err *.out

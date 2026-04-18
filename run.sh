@@ -7,25 +7,14 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 
-echo "MODE=$MODE IMPL=$IMPL matrix=$matrix p=$p test=$test"
+echo "MODE=$MODE IMPL=$IMPL matrix=$matrix p=$p"
 
+# Rebuild on compute node so -march=native targets the right CPU
 make clean
-
 if [ "$MODE" = "parallel" ]; then
-    if [ "$IMPL" = "pthreads" ]; then
-        make IMPL="$IMPL" test="$test" pthreads
-        ./pthread "$matrix" "$p"
-    elif [ "$IMPL" = "omp" ]; then
-        make IMPL="$IMPL" test="$test" omp
-        ./omp "$matrix" "$p"
-    elif [ "$IMPL" = "balance" ]; then
-        make IMPL="$IMPL" test="$test" balance
-        ./balance "$matrix" "$p"
-    else
-        echo "Unknown IMPL=$IMPL"
-        exit 1
-    fi
+    make IMPL="$IMPL" test="$test" pspgemm
+    ./pspgemm "$matrix" "$p" | awk 'NR<=20{print} NR==21{print "... output truncated after 20 lines ..."}'
 else
     make test="$test" serial
-    ./serial "$matrix"
+    ./serial "$matrix" | awk 'NR<=20{print} NR==21{print "... output truncated after 20 lines ..."}'
 fi
