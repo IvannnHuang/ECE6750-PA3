@@ -20,7 +20,7 @@ endif
 
 all: full
 
-ifeq ($(MODE),serial)
+ifeq ($(MODE),single)
 RUN_BIN = serial
 RUN_P =
 RUN_TAG = serial_$(basename $(notdir $(matrix)))
@@ -32,13 +32,16 @@ endif
 
 ifeq ($(IMPL),pthreads)
 PSPGEMM_SRC = pthread.c
-CFLAGS = -Wall -Wextra
+PSPGEMM_LIBS = -lpthread
 else ifeq ($(IMPL),omp)
 PSPGEMM_SRC = omp.c
+PSPGEMM_LIBS = -fopenmp
 else ifeq ($(IMPL),balance)
 PSPGEMM_SRC = balance.c
+PSPGEMM_LIBS = -lpthread
 else
 PSPGEMM_SRC =
+PSPGEMM_LIBS = 
 endif
 
 full: clean
@@ -50,7 +53,7 @@ full: clean
 		--export=MODE="$(MODE)",IMPL="$(IMPL)",matrix="$(matrix)",p="$(RUN_P)",test="$(test)" run.sh
 
 pspgemm: $(PSPGEMM_SRC)
-	$(CC) $(CFLAGS) $(TEST_FLAG) -o $@ $(PSPGEMM_SRC) $(LDFLAGS) -lpthread
+	$(CC) $(CFLAGS) $(TEST_FLAG) -o $@ $(PSPGEMM_SRC) $(LDFLAGS) $(PSPGEMM_LIBS)
 
 serial: serial.c
 	$(CC) $(CFLAGS) -DSERIAL_STANDALONE -o $@ serial.c $(LDFLAGS)

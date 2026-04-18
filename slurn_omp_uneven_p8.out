@@ -1,0 +1,24 @@
+MODE=parallel IMPL=omp matrix=uneven.mtx p=8
+rm -f pspgemm serial
+cc -Wall -Wextra -O3 -march=native -ffast-math -funroll-loops  -o pspgemm omp.c -lm -fopenmp
+Elapsed: 0.321066 seconds
+0	0	0.00
+0	0	0.00
+0	0	0.00
+0	0	0.00
+0	0	0.00
+0	0	0.00
+0	0	0.00
+0	0	0.00
+0	0	0.00
+0	0	0.00
+0	0	0.00
+0	0	0.00
+0	0	0.00
+0	0	0.00
+0	0	0.00
+0	0	0.00
+0	0	0.00
+0	0	0.00
+0	0	0.00
+... output truncated after 20 lines ...

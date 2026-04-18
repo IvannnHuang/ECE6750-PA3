@@ -9,12 +9,12 @@
 
 echo "MODE=$MODE IMPL=$IMPL matrix=$matrix p=$p"
 
-# Rebuild on compute node so -march=native targets the right CPU
 make clean
+
 if [ "$MODE" = "parallel" ]; then
-    make IMPL="$IMPL" test="$test" pspgemm
+    make IMPL="$IMPL" test="$test" pspgemm || exit 1
     ./pspgemm "$matrix" "$p" | awk 'NR<=20{print} NR==21{print "... output truncated after 20 lines ..."}'
 else
-    make test="$test" serial
+    make test="$test" serial || exit 1
     ./serial "$matrix" | awk 'NR<=20{print} NR==21{print "... output truncated after 20 lines ..."}'
 fi

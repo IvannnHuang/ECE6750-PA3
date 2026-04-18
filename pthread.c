@@ -172,7 +172,6 @@ void *worker(void *arg) {
 
 }
 
-
 /*
 Implements a pthread version of Gustavson's algorithm.
 */
