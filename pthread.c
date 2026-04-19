@@ -91,11 +91,11 @@ void convert(CSRdata *a) {
     for (int i = 0; i < a -> nnz; i++) {
         a->rowOffsets[a -> x[i] + 1] += 1;
     }
-    int sum = 0;
-    for (int i = 0; i <= a -> m; i++) {
-        sum += a-> rowOffsets[i];
-        a->rowOffsets[i] = sum;
+
+    for (int i = 0; i < a->m; i++) {
+        a->rowOffsets[i + 1] += a->rowOffsets[i];
     }
+    
     int *temp = (int *)malloc((a->m + 1) * sizeof(int));
     memcpy(temp, a->rowOffsets, (a->m + 1) * sizeof(int));
     double *values_temp = (double *)malloc(a->nnz * sizeof(double));

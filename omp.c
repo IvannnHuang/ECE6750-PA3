@@ -79,11 +79,11 @@ void convert(CSRdata *a) {
     for (int i = 0; i < a -> nnz; i++) {
         a->rowOffsets[a -> x[i] + 1] += 1;
     }
-    int sum = 0;
-    for (int i = 0; i <= a -> m; i++) {
-        sum += a-> rowOffsets[i];
-        a->rowOffsets[i] = sum;
+    
+    for (int i = 0; i < a->m; i++) {
+        a->rowOffsets[i + 1] += a->rowOffsets[i];
     }
+    
     int *temp = (int *)malloc((a->m + 1) * sizeof(int));
     memcpy(temp, a->rowOffsets, (a->m + 1) * sizeof(int));
     double *values_temp = (double *)malloc(a->nnz * sizeof(double));
@@ -130,7 +130,7 @@ void sparseMM_omp(CSRdata *a, CSRdata *b, COOdata *c, int p) {
 
     // dynamic scheduling for uneven workloads
     #pragma omp parallel for schedule(dynamic,1)
-    for (int i = 0; i < a->m; i += p) {
+    for (int i = 0; i < a->m; i ++) {
         // A temporary row to store the values collected in this iteration
         double *tempRow = (double *)calloc(n, sizeof(double));
 

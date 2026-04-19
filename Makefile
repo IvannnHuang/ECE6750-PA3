@@ -30,7 +30,7 @@ RUN_P = $(p)
 RUN_TAG = $(IMPL)_$(basename $(notdir $(matrix)))_p$(p)
 endif
 
-ifeq ($(IMPL),pthreads)
+ifeq ($(IMPL),pthread)
 PSPGEMM_SRC = pthread.c
 PSPGEMM_LIBS = -lpthread
 else ifeq ($(IMPL),omp)

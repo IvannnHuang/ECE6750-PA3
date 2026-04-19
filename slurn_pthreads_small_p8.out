@@ -1,7 +1,7 @@
-MODE=parallel IMPL=pthreads matrix=small.mtx p=8
+MODE=parallel IMPL=pthread matrix=small.mtx p=8
 rm -f pspgemm serial
-cc -Wall -Wextra  -o pspgemm pthread.c -lm -lpthread
-Elapsed: 0.000597 seconds
+cc -Wall -Wextra -O3 -march=native -ffast-math -funroll-loops  -o pspgemm pthread.c -lm -lpthread
+Elapsed: 0.000754 seconds
 0	0	0.03
 0	1	0.84
 0	2	18.02

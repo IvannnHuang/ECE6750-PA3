@@ -1,7 +1,7 @@
-MODE=parallel IMPL=pthreads matrix=uneven.mtx p=8
+MODE=parallel IMPL=pthread matrix=uneven.mtx p=8
 rm -f pspgemm serial
-cc -Wall -Wextra  -o pspgemm pthread.c -lm -lpthread
-Elapsed: 2.680279 seconds
+cc -Wall -Wextra -O3 -march=native -ffast-math -funroll-loops  -o pspgemm pthread.c -lm -lpthread
+Elapsed: 0.644317 seconds
 2	0	14411.69
 2	1	14106.15
 2	2	14069.60

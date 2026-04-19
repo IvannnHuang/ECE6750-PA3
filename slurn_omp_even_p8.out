@@ -1,7 +1,7 @@
 MODE=parallel IMPL=omp matrix=even.mtx p=8
 rm -f pspgemm serial
 cc -Wall -Wextra -O3 -march=native -ffast-math -funroll-loops  -o pspgemm omp.c -lm -fopenmp
-Elapsed: 0.459654 seconds
+Elapsed: 0.549292 seconds
 0	0	9048.36
 0	1	9331.55
 0	2	8932.13
