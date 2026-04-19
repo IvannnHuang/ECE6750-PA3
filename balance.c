@@ -170,7 +170,7 @@ void convert(CSRdata *a) {
         a->rowOffsets[a -> x[i] + 1] += 1;
     }
 
-    for (int i = 0; i <= a -> m; i++) {
+    for (int i = 0; i < a -> m; i++) {
         a->rowOffsets[i + 1] += a->rowOffsets[i];
     }
     int *temp = (int *)malloc((a->m + 1) * sizeof(int));
@@ -271,12 +271,14 @@ void sparseMM_balance(CSRdata *a, CSRdata *b, COOdata *c, int p) {
     buildOpsPrefix(ops_per_row, m, ops_prefix);
     buildPartitions(ops_prefix, m, p, row_start);
 
+    #ifdef DEBUG_PARTITION
     printf("balanced partitions:\n");
     for (int t = 0; t < p; t++) {
         long long part_ops = ops_prefix[row_start[t + 1]] - ops_prefix[row_start[t]];
         printf("thread %d: rows [%d, %d), ops=%lld\n",
             t, row_start[t], row_start[t + 1], part_ops);
     }
+    #endif
 
     // allocate COO result
     c->m = m;

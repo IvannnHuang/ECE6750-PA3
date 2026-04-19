@@ -39,6 +39,9 @@ PSPGEMM_LIBS = -fopenmp
 else ifeq ($(IMPL),balance)
 PSPGEMM_SRC = balance.c
 PSPGEMM_LIBS = -lpthread
+else ifeq ($(IMPL),balance_v2)
+PSPGEMM_SRC = balance_v2.c
+PSPGEMM_LIBS = -lpthread
 else
 PSPGEMM_SRC =
 PSPGEMM_LIBS = 
