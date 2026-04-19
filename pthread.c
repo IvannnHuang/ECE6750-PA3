@@ -225,7 +225,7 @@ int main(int argc, char **argv) {
     FILE *fptr;
 
     if (argc < 3) {
-        printf("Usage: %s matrix_file\n", argv[0]);
+        printf("Usage: %s matrix_file num_threads\n", argv[0]);
         return 1;
     }
 
