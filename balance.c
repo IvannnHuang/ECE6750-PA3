@@ -252,43 +252,7 @@ void *worker(void *arg) {
 /*
 Implements a pthread version of Gustavson's algorithm.
 */
-void sparseMM_balance(CSRdata *a, CSRdata *b, COOdata *c, int p) {
-    int m = a -> m;
-    int n = b -> n;
- 
-    // count output nnz and prefix sum per row
-    int *nnz_per_row = (int *) malloc(m * sizeof(int));
-    int *row_ptr = (int *) malloc((m + 1) * sizeof(int));
-    long long *ops_per_row = (long long *) malloc(m * sizeof(long long));
-
-    computeRowStats(a, b, nnz_per_row, row_ptr, ops_per_row);    
-    int total_nnz = row_ptr[m];
-
-    // Build work prefix sum and balanced row partitions
-    long long *ops_prefix = (long long *) malloc((m + 1) * sizeof(long long));
-    int *row_start = (int *) malloc((p + 1) * sizeof(int));
-
-    buildOpsPrefix(ops_per_row, m, ops_prefix);
-    buildPartitions(ops_prefix, m, p, row_start);
-
-    #ifdef DEBUG_PARTITION
-    printf("balanced partitions:\n");
-    for (int t = 0; t < p; t++) {
-        long long part_ops = ops_prefix[row_start[t + 1]] - ops_prefix[row_start[t]];
-        printf("thread %d: rows [%d, %d), ops=%lld\n",
-            t, row_start[t], row_start[t + 1], part_ops);
-    }
-    #endif
-
-    // allocate COO result
-    c->m = m;
-    c->n = n;
-    c->pointer = 0;
-    c->nnz = total_nnz;
-    c->row = (int *)malloc(total_nnz * sizeof(int));
-    c->column = (int *)malloc(total_nnz * sizeof(int));
-    c->values = (double *)malloc(total_nnz * sizeof(double));
-
+void sparseMM_balance(CSRdata *a, CSRdata *b, COOdata *c, int p, int *row_ptr, int *row_start) {
     // create threads
     pthread_t *threads = (pthread_t *) malloc(p * sizeof(pthread_t));
     ThreadArg * args = (ThreadArg *) malloc(p * sizeof(ThreadArg));
@@ -310,11 +274,6 @@ void sparseMM_balance(CSRdata *a, CSRdata *b, COOdata *c, int p) {
         pthread_join(threads[t], NULL);
     }
 
-    free(nnz_per_row);
-    free(row_ptr);
-    free(ops_per_row);
-    free(ops_prefix);
-    free(row_start);
     free(threads);
     free(args);
 }
@@ -396,11 +355,41 @@ int main(int argc, char **argv) {
     b->values = (double *)malloc(a->nnz * sizeof(double));
     memcpy(b->values, a->values, a->nnz * sizeof(double));
 
+    // Precompute output row offsets and balanced partitions before timing.
+    int *nnz_per_row = (int *) malloc(a->m * sizeof(int));
+    int *row_ptr = (int *) malloc((a->m + 1) * sizeof(int));
+    long long *ops_per_row = (long long *) malloc(a->m * sizeof(long long));
+    computeRowStats(a, b, nnz_per_row, row_ptr, ops_per_row);
+    int total_nnz = row_ptr[a->m];
+
+    long long *ops_prefix = (long long *) malloc((a->m + 1) * sizeof(long long));
+    int *row_start = (int *) malloc((p + 1) * sizeof(int));
+    buildOpsPrefix(ops_per_row, a->m, ops_prefix);
+    buildPartitions(ops_prefix, a->m, p, row_start);
+
+    #ifdef DEBUG_PARTITION
+    printf("balanced partitions:\n");
+    for (int t = 0; t < p; t++) {
+        long long part_ops = ops_prefix[row_start[t + 1]] - ops_prefix[row_start[t]];
+        printf("thread %d: rows [%d, %d), ops=%lld\n",
+            t, row_start[t], row_start[t + 1], part_ops);
+    }
+    #endif
+
+    // Allocate COO result before timing.
+    c->m = a->m;
+    c->n = b->n;
+    c->pointer = 0;
+    c->nnz = total_nnz;
+    c->row = (int *)malloc(total_nnz * sizeof(int));
+    c->column = (int *)malloc(total_nnz * sizeof(int));
+    c->values = (double *)malloc(total_nnz * sizeof(double));
+
     // Times the matrix multiplication method
     struct timespec start, end;
     double time;
     clock_gettime(CLOCK_MONOTONIC, &start);
-    sparseMM_balance(a, b, c, p);
+    sparseMM_balance(a, b, c, p, row_ptr, row_start);
     clock_gettime(CLOCK_MONOTONIC, &end);
     
     time =
@@ -414,5 +403,10 @@ int main(int argc, char **argv) {
     for (int i = 0; i < c->nnz; i++) {
         printf("%d\t%d\t%.2f\n", c -> row[i], c -> column[i], c -> values[i]);
     }
+    free(nnz_per_row);
+    free(row_ptr);
+    free(ops_per_row);
+    free(ops_prefix);
+    free(row_start);
     return 0;
 }

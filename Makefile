@@ -9,6 +9,8 @@ matrix ?= small.mtx
 p ?= 8
 test ?= 0
 PARTITION ?= ece6750
+omp_policy ?= dynamic
+omp_chunk ?= 1
 
 ifeq ($(test),1)
 TEST_FLAG = -DTEST
@@ -53,7 +55,7 @@ full: clean
 		--output=slurn_%j_$(RUN_TAG).out \
 		--error=slurn_%j_$(RUN_TAG).err \
 		--cpus-per-task=$(p) \
-		--export=MODE="$(MODE)",IMPL="$(IMPL)",matrix="$(matrix)",p="$(RUN_P)",test="$(test)" run.sh
+		--export=MODE="$(MODE)",IMPL="$(IMPL)",matrix="$(matrix)",p="$(RUN_P)",test="$(test)",OMP_POLICY="$(omp_policy)",OMP_CHUNK="$(omp_chunk)" run.sh
 
 pspgemm: $(PSPGEMM_SRC)
 	$(CC) $(CFLAGS) $(TEST_FLAG) -o $@ $(PSPGEMM_SRC) $(LDFLAGS) $(PSPGEMM_LIBS)
