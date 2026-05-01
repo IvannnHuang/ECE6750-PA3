@@ -1,5 +1,19 @@
 # ECE6750-PA3
 
+## Run Instructions
+make full MODE=serial   IMPL=serial matrix=even.mtx
+make full MODE=parallel IMPL=pthread matrix=even.mtx p=8
+make full MODE=parallel IMPL=omp matrix=even.mtx p=8
+make full MODE=parallel IMPL=balance matrix=even.mtx p=8
+make full MODE=parallel IMPL=balance_v2 matrix=even.mtx p=8
+
+make full MODE=serial   IMPL=serial     matrix=uneven.mtx
+make full MODE=parallel IMPL=pthread    matrix=uneven.mtx p=8
+make full MODE=parallel IMPL=omp        matrix=uneven.mtx p=8
+make full MODE=parallel IMPL=balance    matrix=uneven.mtx p=8
+make full MODE=parallel IMPL=balance_v2 matrix=uneven.mtx p=8
+
+
 ## Setup 
 ```
 ssh netid@login.ece.cornell.edu
